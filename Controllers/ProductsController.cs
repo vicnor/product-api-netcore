@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using product_api_netcore.Models;
 using System.Linq;
 
@@ -12,11 +13,14 @@ namespace product_api_netcore.Controllers
     public class ProductsController : ControllerBase
     {
 
+        private readonly ILogger<ProductsController> _logger;
+
         private readonly ProductContext _context;
 
-        public ProductsController(ProductContext context)
+        public ProductsController(ProductContext context, ILogger<ProductsController> logger)
         {
             _context = context;
+            _logger = logger;
 
             if (_context.Products.Any()) return;
 
@@ -28,6 +32,9 @@ namespace product_api_netcore.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public ActionResult<IQueryable<Product>> GetProducts([FromQuery] ProductRequest request)
         {
+            if (request.Limit >= 100)
+                _logger.LogInformation("Requesting more than 100 products.");
+
             var result = _context.Products as IQueryable<Product>;
 
             Response.Headers["x-total-count"] = result.Count().ToString();
