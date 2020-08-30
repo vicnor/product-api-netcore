@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using product_api_netcore.Models;
@@ -121,6 +122,54 @@ namespace product_api_netcore.Controllers
 
                 return ValidationProblem(e.Message);
             }
+        }
+
+        [HttpPatch]
+        [Route("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public ActionResult<Product> PatchProduct([FromRoute] int id, [FromBody] JsonPatchDocument<Product> patch)
+        {
+            try
+            {
+                var productDb = _context.Products
+                  .FirstOrDefault(p => p.Id == id);
+
+                if (productDb == null) return NotFound();
+
+                patch.ApplyTo(productDb, ModelState);
+
+                if (!ModelState.IsValid || !TryValidateModel(productDb))
+                    return ValidationProblem(ModelState);
+
+                _context.SaveChanges();
+
+                return Ok(productDb);
+            }
+            catch (Exception e)
+            {
+                _logger.LogWarning(e, "Unable to PATCH product.");
+
+                return ValidationProblem(e.Message);
+            }
+        }
+
+        [HttpDelete]
+        [Route("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public ActionResult<Product> DeleteProduct([FromRoute] int id)
+        {
+            var productDb = _context.Products
+              .FirstOrDefault(p => p.Id == id);
+
+            if (productDb == null) return NotFound();
+
+            _context.Products.Remove(productDb);
+            _context.SaveChanges();
+
+            return NoContent();
         }
 
         public class ProductRequest

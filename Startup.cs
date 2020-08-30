@@ -28,6 +28,7 @@ namespace product_api_netcore
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+
             services.AddApiVersioning(opt => opt.ReportApiVersions = true);
 
             services.AddDbContext<ProductContext>(opt => opt.UseInMemoryDatabase("Products"));
@@ -40,6 +41,8 @@ namespace product_api_netcore
             }));
 
             services.AddControllers();
+
+            services.AddControllers().AddNewtonsoftJson();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
